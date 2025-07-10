@@ -79,6 +79,12 @@ async function run() {
       res.send(result);
     })
 
+    // home page post
+    app.get('/public-post', async(req, res) =>{
+      const result = await postCollection.find().toArray();
+      res.send(result);
+    })
+
 
 
     // Send a ping to confirm a successful connection
