@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 const app = express();
@@ -83,6 +83,15 @@ async function run() {
     app.get('/public-post', async(req, res) =>{
       const result = await postCollection.find().toArray();
       res.send(result);
+    })
+
+    // post details page
+
+    app.get('/post-details/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await postCollection.findOne(query);
+      res.send(result)
     })
 
 
