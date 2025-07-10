@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require("express");
 const cors = require("cors");
-const dotenv = require("dotenv");
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 
@@ -11,6 +10,40 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 
+
+// Admin SDK
+
+const admin = require("firebase-admin");
+
+const decodedKey =Buffer.from(process.env.FB_SERVICRKEY, 'base64').toString('utf-8');
+const serviceAccount = JSON.parse(decodedKey)
+
+const {getAuth} = require('firebase-admin/auth');
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+
+// verifyToken
+
+const verifyJWT = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).send({ message: 'unauthorized access' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decoded = await getAuth().verifyIdToken(token);
+    req.user = decoded;
+    next();
+  } 
+  
+  catch (error) {
+    return res.status(401).send({ message: "unauthorized" });
+  }
+};
 
 
 const uri = process.env.MongoDB_URL;
@@ -32,11 +65,21 @@ async function run() {
     const database = client.db("NodeTalkDataBase");
     const postCollection = database.collection("postColl")
 
+    // user new post added
     app.post('/add-user-post', async(req, res) => {
       const newPost = req.body;
       const result = await postCollection.insertOne(newPost);
       res.send(result)
     })
+
+    // specific user post
+    app.get('/specific-post',verifyJWT, async(req, res) =>{
+      const email = req.user.email;
+      const result = await postCollection.find({AuthorEmail: email}).toArray();
+      res.send(result);
+    })
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
