@@ -105,7 +105,7 @@ async function run() {
 
     // user role info
 
-    app.post('/users',verifyJWT, async(req, res) => {
+    app.post('/users', async(req, res) => {
       const user = req.body;
       const query = { email: user.email };
       const existingUsers = await userCollection.findOne(query);
@@ -117,6 +117,13 @@ async function run() {
     })
 
 
+    // user role founding
+
+    app.get('/user-role', verifyJWT, async (req, res) => {
+      const email = req.user.email;
+      const user = await userCollection.findOne({ email });
+      res.send({ role: user?.role });
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
