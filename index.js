@@ -76,7 +76,7 @@ async function run() {
     // specific user post
     app.get('/specific-post',verifyJWT, async(req, res) =>{
       const email = req.user.email;
-      const result = await postCollection.find({AuthorEmail: email}).toArray();
+      const result = await postCollection.find({AuthorEmail: email}).sort({ createdAt: -1 }).toArray();
       res.send(result);
     })
 
@@ -90,7 +90,7 @@ async function run() {
 
     // home page post
     app.get('/public-post', async(req, res) =>{
-      const result = await postCollection.find({}, {projection:{AuthorEmail:0}}).toArray();
+      const result = await postCollection.find({}, {projection:{AuthorEmail:0}}).sort({ createdAt: -1 }).toArray();
       res.send(result);
     })
 
@@ -122,7 +122,7 @@ async function run() {
     app.get('/user-role', verifyJWT, async (req, res) => {
       const email = req.user.email;
       const user = await userCollection.findOne({ email });
-      res.send({ role: user?.role });
+      res.send({ role: user?.role, creationTime: user?.creationTime });
     });
 
     // Send a ping to confirm a successful connection
