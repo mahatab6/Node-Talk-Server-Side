@@ -79,6 +79,14 @@ async function run() {
       res.send(result);
     })
 
+    // specific post delete on user
+    app.delete('/user-post-remove/:id', async(req, res) =>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await postCollection.deleteOne(query);
+      res.send(result)
+    })
+
     // home page post
     app.get('/public-post', async(req, res) =>{
       const result = await postCollection.find().toArray();
