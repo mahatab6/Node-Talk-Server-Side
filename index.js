@@ -90,7 +90,7 @@ async function run() {
 
     // home page post
     app.get('/public-post', async(req, res) =>{
-      const result = await postCollection.find().toArray();
+      const result = await postCollection.find({}, {projection:{AuthorEmail:0}}).toArray();
       res.send(result);
     })
 
@@ -99,13 +99,13 @@ async function run() {
     app.get('/post-details/:id', async(req, res) => {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
-      const result = await postCollection.findOne(query);
+      const result = await postCollection.findOne(query, {projection:{AuthorEmail:0}});
       res.send(result)
     })
 
     // user role info
 
-    app.post('/users', async(req, res) => {
+    app.post('/users',verifyJWT, async(req, res) => {
       const user = req.body;
       const query = { email: user.email };
       const existingUsers = await userCollection.findOne(query);
