@@ -64,6 +64,7 @@ async function run() {
 
     const database = client.db("NodeTalkDataBase");
     const postCollection = database.collection("postColl")
+    const userCollection = database.collection("userColl")
 
     // user new post added
     app.post('/add-user-post', async(req, res) => {
@@ -99,6 +100,19 @@ async function run() {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
       const result = await postCollection.findOne(query);
+      res.send(result)
+    })
+
+    // user role info
+
+    app.post('/users', async(req, res) => {
+      const user = req.body;
+      const query = { email: user.email };
+      const existingUsers = await userCollection.findOne(query);
+      if(existingUsers){
+        return res.send({ message: 'User already exists' })
+      }
+      const result = await userCollection.insertOne(user);
       res.send(result)
     })
 
