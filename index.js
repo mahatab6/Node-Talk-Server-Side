@@ -161,25 +161,47 @@ async function run() {
 
     // votes counts
     app.post('/vote', async (req, res) =>{
-      const {postId, voterEmail, voteType} =req.body;
+      const {postId, voterEmail, voteType} =req.body
+      const objectId = ObjectId.createFromHexString(postId);
+      const voteField = voteType === 'up'? 'upVote' : 'downVote';
+      const oppsideVoteField = voteType === 'up'? 'downVote' : 'upVote';
       
       const existingVoter = await votesCollection.findOne({postId, voterEmail});
 
-      if(existingVoter){
-        return res.send({ message: 'Already voted' });
-      };
+      if(!existingVoter){
+        await votesCollection.insertOne({ postId, voterEmail, voteType });
+        await postCollection.updateOne(
+          { _id: objectId },
+          { $inc: { [voteField]: 1 } }
+          );
+          
+          return res.send({ message: `Voted ${voteType}` });
+      }
 
-      await votesCollection.insertOne({ postId, voterEmail, voteType });
-      const voteField = voteType === 'up'? 'upVote' : 'downVote';
-      const objectId = ObjectId.createFromHexString(postId);
+      if(existingVoter.voteType === voteType){
+        await votesCollection.deleteOne({postId, voterEmail});
+        await postCollection.updateOne(
+          {_id: objectId},
+          {$inc: {[voteField]: -1}}
+        );
+    
+        return res.send({ message: `${voteType} vote remove` });
+      }
 
-
-      const result = await postCollection.updateOne(
-      { _id: objectId },
-      { $inc: { [voteField]: 1 } }
+      await votesCollection.updateOne(
+        {postId, voterEmail},
+        {$set: voteType}
       );
-
-      res.send({ message: 'Your vote added' });
+      await postCollection.updateOne(
+        {_id: objectId},
+        {
+          $inc: {
+            [voteField]:1,
+            [oppsideVoteField]: -1
+          }
+        }
+      )
+      return res.send({ message: `Vote changed to ${voteType}` });
 
     })
 
