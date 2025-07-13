@@ -100,11 +100,58 @@ async function run() {
       if(search){
         query["tags.value"] = { $regex: search, $options: 'i'};
       }
+    
+      // most popular
+      if(sort === "popular"){
+        const pipeline = [
+          {$match: query},
+          {
+            $addFields:{
+              voteDifference: { $subtract: ['$upVote', '$downVote'] }
+            }
+          },
+          { $sort: { voteDifference: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+          {
+          $project: {
+            AuthorEmail: 0
+          }
+          }
+        ];
+
+        const posts = await postCollection.aggregate(pipeline).toArray();
+        const total = await postCollection.countDocuments(query);
+        return res.send({ post: posts, total });
+      }
+
+      // most down
+      if (sort === "downVote") {
+        const pipeline = [
+          { $match: query },
+          {
+            $addFields: {
+              voteDifference: {
+                $subtract: [
+                  { $ifNull: ["$downVote", 0] },
+                  { $ifNull: ["$upVote", 0] }
+                ]
+              }
+            }
+          },
+          { $sort: { voteDifference: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+          { $project: { AuthorEmail: 0 } }
+        ];
+
+        const posts = await postCollection.aggregate(pipeline).toArray();
+        const total = await postCollection.countDocuments(query);
+        return res.send({ post: posts, total });
+      }
 
    
-
       const total = await postCollection.countDocuments(query);
-      
       const result = await postCollection.find(query, {projection:{AuthorEmail:0}}).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray();
       res.send({post: result, total});
     })
