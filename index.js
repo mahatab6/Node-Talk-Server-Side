@@ -4,6 +4,7 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
+
 const app = express();
 const port = 3000;
 
@@ -65,6 +66,7 @@ async function run() {
     const database = client.db("NodeTalkDataBase");
     const postCollection = database.collection("postColl")
     const userCollection = database.collection("userColl")
+    const votesCollection = database.collection("votesColl")
 
     // user new post added
     app.post('/add-user-post', async(req, res) => {
@@ -155,6 +157,32 @@ async function run() {
       const result = await postCollection.find(query, {projection:{AuthorEmail:0}}).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray();
       res.send({post: result, total});
     })
+
+
+    // votes counts
+    app.post('/vote', async (req, res) =>{
+      const {postId, voterEmail, voteType} =req.body;
+      
+      const existingVoter = await votesCollection.findOne({postId, voterEmail});
+
+      if(existingVoter){
+        return res.send({ message: 'Already voted' });
+      };
+
+      await votesCollection.insertOne({ postId, voterEmail, voteType });
+      const voteField = voteType === 'up'? 'upVote' : 'downVote';
+      const objectId = ObjectId.createFromHexString(postId);
+
+
+      const result = await postCollection.updateOne(
+      { _id: objectId },
+      { $inc: { [voteField]: 1 } }
+      );
+
+      res.send({ message: 'Your vote added' });
+
+    })
+
 
     // post details page
 
