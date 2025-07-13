@@ -90,8 +90,23 @@ async function run() {
 
     // home page post
     app.get('/public-post', async(req, res) =>{
-      const result = await postCollection.find({}, {projection:{AuthorEmail:0}}).sort({ createdAt: -1 }).toArray();
-      res.send(result);
+      const search = req.query.search ||'';
+      const sort = req.query.sort||'';
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit);
+      const skip = (page -1)*limit;
+
+      const query = {};
+      if(search){
+        query["tags.value"] = { $regex: search, $options: 'i'};
+      }
+
+   
+
+      const total = await postCollection.countDocuments(query);
+      
+      const result = await postCollection.find(query, {projection:{AuthorEmail:0}}).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray();
+      res.send({post: result, total});
     })
 
     // post details page
