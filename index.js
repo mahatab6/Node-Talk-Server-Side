@@ -234,18 +234,25 @@ async function run() {
         }
       ]).toArray();
 
-      const postIds = posts.map(post => post._id)
+      const postIds = posts.map(post => post._id.toString())
       const totalPost = posts.length;
 
       const totalUpVote = posts.reduce((sum, post)=> sum + (post.upVote || 0), 0);
       const totalComment = await commentCollection.countDocuments({
-        postId: {$in:postIds}
-      })
+      postId: { $in: postIds }
+      });
 
-      console.log(totalComment)
+      const recentPost = await postCollection.find({ AuthorEmail: email }).sort({createdAt: -1}).limit(5).toArray();
       
-
+      res.send({
+        totalPost,
+        totalComment,
+        totalUpVote,
+        recentPost
+      })
+      
     })
+
 
     // post details page
     app.get('/post-details/:id', async(req, res) => {
