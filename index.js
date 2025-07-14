@@ -67,6 +67,7 @@ async function run() {
     const postCollection = database.collection("postColl")
     const userCollection = database.collection("userColl")
     const votesCollection = database.collection("votesColl")
+    const commentCollection = database.collection("commentColl")
 
     // user new post added
     app.post('/add-user-post', async(req, res) => {
@@ -158,6 +159,21 @@ async function run() {
       res.send({post: result, total});
     })
 
+    // userComment stor and count
+    app.post('/comments', async(req, res) => {
+      const comment = req.body;
+      const result = await commentCollection.insertOne(comment);
+      res.send(result)
+    })
+
+    // user-comment-show
+    app.get('/specific-post-comment/:id', async(req, res) =>{
+      const id =req.params.id;
+      const query = { postId: id };
+      const result = await commentCollection.find(query).toArray();
+      res.send(result);
+
+    })
 
     // votes counts
     app.post('/vote', async (req, res) =>{
@@ -205,9 +221,33 @@ async function run() {
 
     })
 
+    // user-post-summary
+    app.get('/user-summary/:email', async (req, res)=>{
+      const email = req.params.email;
+      const posts = await postCollection.aggregate([
+        {$match: {AuthorEmail: email}},
+        {
+          $project: {
+            _id:1,
+            upVote:1
+          }
+        }
+      ]).toArray();
+
+      const postIds = posts.map(post => post._id)
+      const totalPost = posts.length;
+
+      const totalUpVote = posts.reduce((sum, post)=> sum + (post.upVote || 0), 0);
+      const totalComment = await commentCollection.countDocuments({
+        postId: {$in:postIds}
+      })
+
+      console.log(totalComment)
+      
+
+    })
 
     // post details page
-
     app.get('/post-details/:id', async(req, res) => {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
@@ -216,7 +256,6 @@ async function run() {
     })
 
     // user role info
-
     app.post('/users', async(req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -230,7 +269,6 @@ async function run() {
 
 
     // user role founding
-
     app.get('/user-role', verifyJWT, async (req, res) => {
       const email = req.user.email;
       const user = await userCollection.findOne({ email });
