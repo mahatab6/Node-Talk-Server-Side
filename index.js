@@ -162,7 +162,14 @@ async function run() {
     // userComment stor and count
     app.post('/comments', async(req, res) => {
       const comment = req.body;
+      const postId = req.body.postId;
       const result = await commentCollection.insertOne(comment);
+
+      const filter = { _id: new ObjectId(postId) };
+      const updateDoc = { $inc: { commentCount: 1 } };
+
+      const updateResult = await postCollection.updateOne(filter, updateDoc);
+
       res.send(result)
     })
 
