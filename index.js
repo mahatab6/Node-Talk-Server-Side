@@ -253,6 +253,13 @@ async function run() {
       
     })
 
+    // user-post-count
+    app.get('/user-post-count/:email', async(req, res) =>{
+      const email = req.params.email;
+      const result = await postCollection.countDocuments({ AuthorEmail: email})
+      res.send({result})
+    })
+
 
     // post details page
     app.get('/post-details/:id', async(req, res) => {
