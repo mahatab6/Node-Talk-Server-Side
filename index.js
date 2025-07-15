@@ -68,6 +68,7 @@ async function run() {
     const userCollection = database.collection("userColl")
     const votesCollection = database.collection("votesColl")
     const commentCollection = database.collection("commentColl")
+    const reportCollection = database.collection("reportColl")
 
     // user new post added
     app.post('/add-user-post', async(req, res) => {
@@ -174,12 +175,30 @@ async function run() {
     })
 
     // user-comment-show
-    app.get('/specific-post-comment/:id', async(req, res) =>{
-      const id =req.params.id;
-      const query = { postId: id };
-      const result = await commentCollection.find(query).toArray();
-      res.send(result);
+   app.get('/specific-post-comment/:id', async (req, res) => {
+    const id = req.params.id;
+    const query = { postId: id };
+    const comments = await commentCollection.find(query).toArray(); 
+    const commentIds = comments.map(comment => comment._id.toString());
 
+    const reports = await reportCollection.find({commentId: { $in: commentIds }}).toArray();
+
+    const reportedSet = new Set(reports.map(r => r.commentId));
+
+    const results = comments.map(comment => ({
+      ...comment,
+      reported: reportedSet.has(comment._id.toString())
+    }));
+
+    res.send(results);
+});
+
+
+    // user-Feedback-Report
+    app.post('/user-feedback-report', async(req, res) =>{
+      const reportInfo = req.body;
+      const result = await reportCollection.insertOne(reportInfo);
+      res.send(result)
     })
 
     // votes counts
@@ -226,6 +245,16 @@ async function run() {
       )
       return res.send({ message: `Vote changed to ${voteType}` });
 
+    })
+
+    // admin comment show
+    app.get('/reported-comments-show',verifyJWT, async (req, res) =>{
+
+      const reports = await reportCollection.find({}).toArray();
+      const commentIds = reports.map(r => new ObjectId(r.commentId));
+      const reportedComments = await commentCollection.find({ _id: { $in: commentIds } }).toArray();
+      res.send({ comments: reportedComments, reports: reports});
+    
     })
 
     // user-post-summary
