@@ -257,6 +257,17 @@ async function run() {
     
     })
 
+    // report comment delete
+
+    app.delete('/comment/:id', async (req, res) =>{
+      const id = req.params.id;
+
+      await commentCollection.deleteOne({ _id: new ObjectId(id) });
+      const reportResult = await reportCollection.deleteMany({ commentId: id });
+      res.send(reportResult);
+    } )
+ 
+
     // user-post-summary
     app.get('/user-summary/:email', async (req, res)=>{
       const email = req.params.email;
