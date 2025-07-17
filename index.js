@@ -383,11 +383,18 @@ async function run() {
 
     // manage user stats
     app.get('/manage-user-stats', async (req, res) => {
+      const userSearch = req.query.search;
+
+      const query = {};
+      if(userSearch){
+        query.email = { $regex: userSearch, $options:"i"}
+      }
+      
       const totalUser = await userCollection.countDocuments();
       const adminCount = await userCollection.countDocuments({role: 'admin'});
       const paidMemberCount = await userCollection.countDocuments({role: 'paidmember'});
       const onlyUserCount = await userCollection.countDocuments({role: 'user'});
-      const userStats = await userCollection.find().toArray();
+      const userStats = await userCollection.find(query).toArray();
 
       res.send({
         totalUser,
@@ -403,7 +410,7 @@ async function run() {
     app.patch('/user-stats-change/:id',verifyJWT, async(req, res) =>{
       const userId = req.params.id;
       const {role} = req.body;
-      
+
       const result = await userCollection.updateOne(
         {_id: new ObjectId(userId)},
         { $set: {role: role}}
