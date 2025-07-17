@@ -381,6 +381,25 @@ async function run() {
       console.log(paymentDoc)
     })
 
+    // manage user stats
+
+    app.get('/manage-user-stats', async (req, res) => {
+      const totalUser = await userCollection.countDocuments();
+      const adminCount = await userCollection.countDocuments({role: 'admin'});
+      const paidMemberCount = await userCollection.countDocuments({role: 'paidmember'});
+      const onlyUserCount = await userCollection.countDocuments({role: 'user'});
+      const userStats = await userCollection.find().toArray();
+
+      res.send({
+        totalUser,
+        adminCount,
+        paidMemberCount,
+        onlyUserCount, 
+        userStats
+      })
+      
+    })
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
