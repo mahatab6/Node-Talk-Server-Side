@@ -384,6 +384,9 @@ async function run() {
     // manage user stats
     app.get('/manage-user-stats', async (req, res) => {
       const userSearch = req.query.search;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit);
+      const skip = (page -1)*limit;
 
       const query = {};
       if(userSearch){
@@ -394,7 +397,7 @@ async function run() {
       const adminCount = await userCollection.countDocuments({role: 'admin'});
       const paidMemberCount = await userCollection.countDocuments({role: 'paidmember'});
       const onlyUserCount = await userCollection.countDocuments({role: 'user'});
-      const userStats = await userCollection.find(query).toArray();
+      const userStats = await userCollection.find(query).skip(skip).limit(limit).toArray();
 
       res.send({
         totalUser,
