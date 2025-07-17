@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
-
+const stripe = require('stripe')(process.env.Secret_key);
 
 const app = express();
 const port = 3000;
@@ -69,6 +69,7 @@ async function run() {
     const votesCollection = database.collection("votesColl")
     const commentCollection = database.collection("commentColl")
     const reportCollection = database.collection("reportColl")
+    const paymentHistory = database.collection("payment")
 
     // user new post added
     app.post('/add-user-post', async(req, res) => {
@@ -259,9 +260,8 @@ async function run() {
 
     // report comment delete
 
-    app.delete('/comment/:id', async (req, res) =>{
+    app.delete('/comment/:id',verifyJWT, async (req, res) =>{
       const id = req.params.id;
-
       await commentCollection.deleteOne({ _id: new ObjectId(id) });
       const reportResult = await reportCollection.deleteMany({ commentId: id });
       res.send(reportResult);
@@ -335,6 +335,52 @@ async function run() {
       const user = await userCollection.findOne({ email });
       res.send({ role: user?.role, creationTime: user?.creationTime });
     });
+
+    // payment intent
+
+    app.post('/create-payment-intent', async (req, res) => {
+      const serviceCosut = req.body.serviceCosut;
+  
+    try {
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: 1000, // amount in cents
+        currency: 'usd',
+        automatic_payment_methods: {enabled: true},
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      });
+    } catch (error) {
+      res.status(500).send({ error: error.message });
+    }
+    });
+
+    // payment history
+    app.post("/payments", async (req, res) =>{
+
+      const { paymentIntent, userEmail } = req.body;
+
+      const paymentDoc = {
+
+        email: userEmail,
+        transactionId: paymentIntent.id,
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        status: paymentIntent.status,
+        createdAt: new Date(paymentIntent.created * 1000),
+        paymentIntent: paymentIntent,
+
+      };
+      const paymentResult = await paymentHistory.insertOne(paymentDoc);
+      const userUpdateResult = await userCollection.updateOne(
+        { email: userEmail },
+        { $set: { role: "paidmember" } });
+      
+      res.send({message: "Payment recorded and user upgraded."})
+      console.log(paymentDoc)
+    })
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
