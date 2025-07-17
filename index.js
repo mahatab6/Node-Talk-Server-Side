@@ -382,7 +382,6 @@ async function run() {
     })
 
     // manage user stats
-
     app.get('/manage-user-stats', async (req, res) => {
       const totalUser = await userCollection.countDocuments();
       const adminCount = await userCollection.countDocuments({role: 'admin'});
@@ -400,6 +399,17 @@ async function run() {
       
     })
 
+    // user role change
+    app.patch('/user-stats-change/:id',verifyJWT, async(req, res) =>{
+      const userId = req.params.id;
+      const {role} = req.body;
+      
+      const result = await userCollection.updateOne(
+        {_id: new ObjectId(userId)},
+        { $set: {role: role}}
+      )
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
