@@ -71,6 +71,8 @@ async function run() {
     const reportCollection = database.collection("reportColl")
     const paymentHistory = database.collection("payment")
     const tagsCollection = database.collection("tagsColl")
+    const announcementCollection = database.collection("AnnouncementColl")
+
 
     // user new post added
     app.post('/add-user-post', async(req, res) => {
@@ -260,7 +262,6 @@ async function run() {
     })
 
     // report comment delete
-
     app.delete('/comment/:id',verifyJWT, async (req, res) =>{
       const id = req.params.id;
       await commentCollection.deleteOne({ _id: new ObjectId(id) });
@@ -275,7 +276,6 @@ async function run() {
       res.send(result)
     })
  
-
     // user-post-summary
     app.get('/user-summary/:email', async (req, res)=>{
       const email = req.params.email;
@@ -465,6 +465,29 @@ async function run() {
       )
       res.send(result);
     })
+
+    // Create new announcement
+    app.post('/announcement-public', async(req, res) =>{
+      const announcement = req.body;
+      const result = await announcementCollection.insertOne(announcement);
+      res.send(result);
+    })
+
+    // Get all announcements
+    app.get('/all-announcements', async(req, res) =>{
+      const result = await announcementCollection.find().sort({createdAt: -1}).toArray();
+      res.send(result);
+    })
+
+    app.delete('/announcement-delete/:id', async(req, res) =>{
+      const id = req.params.id;
+      const query = ({_id: new ObjectId(id)});
+      const result = await announcementCollection.deleteOne(query)
+      res.send(result)
+    })
+
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
