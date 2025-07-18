@@ -415,18 +415,20 @@ async function run() {
       const postCount = await postCollection.countDocuments();
       const commentCount = await commentCollection.countDocuments();
       const userCount = await userCollection.countDocuments();
+      const tags = await tagsCollection.find().sort({ createdAt: -1 }).limit(20).toArray();
 
       res.send({
         postCount,
         commentCount,
-        userCount
+        userCount,
+        tags
       })
     })
 
     // admin tags add api
     app.post('/added-tags', async (req, res) => {
-      const newTag = req.body.tags?.toLowerCase();
-      
+      const newTag = req.body.tags;
+
       const query = { tags: newTag };
       const existingTags = await tagsCollection.findOne(query);
 
@@ -434,7 +436,7 @@ async function run() {
         return res.send({ message: "Tags already adding" });
       }
 
-      const result = await tagsCollection.insertOne({ tags: newTag });
+      const result = await tagsCollection.insertOne({ tags: newTag, createdAt: new Date() });
       res.send(result);
     });
 
