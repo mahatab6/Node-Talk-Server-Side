@@ -440,6 +440,12 @@ async function run() {
       res.send(result);
     });
 
+    // admin tags delete
+    app.delete('/tags-delete/:id', async(req, res)=>{
+      const id = req.params.id;
+      const result = await tagsCollection.deleteOne({_id: new ObjectId(id)})
+      res.send(result);
+    })
 
     // user role change
     app.patch('/user-stats-change/:id',verifyJWT, async(req, res) =>{
