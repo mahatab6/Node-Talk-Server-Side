@@ -267,6 +267,13 @@ async function run() {
       const reportResult = await reportCollection.deleteMany({ commentId: id });
       res.send(reportResult);
     } )
+
+    // report dismiss
+    app.delete('/comment-dismiss/:id', async(req,res) =>{
+      const id = req.params.id;
+      const result = await reportCollection.deleteOne({_id: new ObjectId(id)});
+      res.send(result)
+    })
  
 
     // user-post-summary
