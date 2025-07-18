@@ -486,6 +486,11 @@ async function run() {
       res.send(result)
     })
 
+    // filer tags 
+    app.get('/tags-filter', async(req, res) =>{
+      const tags = await tagsCollection.find().sort({ createdAt: -1 }).limit(20).toArray();
+      res.send(tags)
+    })
 
 
 
