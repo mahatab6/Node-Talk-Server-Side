@@ -47,6 +47,7 @@ const verifyJWT = async (req, res, next) => {
 };
 
 
+
 const uri = process.env.MongoDB_URL;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -475,6 +476,11 @@ async function run() {
 
     // Get all announcements
     app.get('/all-announcements', async(req, res) =>{
+      const result = await announcementCollection.find().sort({createdAt: -1}).limit(1).toArray();
+      res.send(result);
+    })
+
+    app.get('/all-announcements-page', async(req, res) =>{
       const result = await announcementCollection.find().sort({createdAt: -1}).toArray();
       res.send(result);
     })
@@ -491,6 +497,13 @@ async function run() {
       const tags = await tagsCollection.find().sort({ createdAt: -1 }).limit(20).toArray();
       res.send(tags)
     })
+
+  // announcements count
+    app.get('/unseen-user', async (req, res) => {
+      const result = await announcementCollection.find().sort({ createdAt: -1 }).limit(5).toArray();
+      res.send(result);
+    });
+
 
 
 
