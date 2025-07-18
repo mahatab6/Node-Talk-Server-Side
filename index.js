@@ -70,6 +70,7 @@ async function run() {
     const commentCollection = database.collection("commentColl")
     const reportCollection = database.collection("reportColl")
     const paymentHistory = database.collection("payment")
+    const tagsCollection = database.collection("tagsColl")
 
     // user new post added
     app.post('/add-user-post', async(req, res) => {
@@ -408,6 +409,35 @@ async function run() {
       })
       
     })
+
+    // admin profile info for user count
+    app.get('/total-user-info', async(req, res) =>{
+      const postCount = await postCollection.countDocuments();
+      const commentCount = await commentCollection.countDocuments();
+      const userCount = await userCollection.countDocuments();
+
+      res.send({
+        postCount,
+        commentCount,
+        userCount
+      })
+    })
+
+    // admin tags add api
+    app.post('/added-tags', async (req, res) => {
+      const newTag = req.body.tags?.toLowerCase();
+      
+      const query = { tags: newTag };
+      const existingTags = await tagsCollection.findOne(query);
+
+      if (existingTags) {
+        return res.send({ message: "Tags already adding" });
+      }
+
+      const result = await tagsCollection.insertOne({ tags: newTag });
+      res.send(result);
+    });
+
 
     // user role change
     app.patch('/user-stats-change/:id',verifyJWT, async(req, res) =>{
