@@ -85,8 +85,16 @@ async function run() {
     // specific user post
     app.get('/specific-post',verifyJWT, async(req, res) =>{
       const email = req.user.email;
-      const result = await postCollection.find({AuthorEmail: email}).sort({ createdAt: -1 }).toArray();
+      const page = parseInt(req.query.page);
+      const limit = parseInt(req.query.limit);
+      const skip = (page - 1)*limit;
+      const result = await postCollection.find({AuthorEmail: email}).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray();
       res.send(result);
+    })
+    // specific user post count
+    app.get("/specific-post-count", async (req, res) =>{
+      const result = await postCollection.countDocuments();
+      res.send(result)
     })
 
     // specific post delete on user
