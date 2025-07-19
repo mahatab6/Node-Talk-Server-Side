@@ -92,10 +92,12 @@ async function run() {
       res.send(result);
     })
     // specific user post count
-    app.get("/specific-post-count", async (req, res) =>{
-      const result = await postCollection.countDocuments();
-      res.send(result)
-    })
+    app.get("/specific-post-count/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await postCollection.countDocuments({ AuthorEmail: email });
+      res.send({ count: result });
+    });
+
 
     // specific post delete on user
     app.delete('/user-post-remove/:id', async(req, res) =>{
