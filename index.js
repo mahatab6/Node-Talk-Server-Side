@@ -497,6 +497,12 @@ async function run() {
       const tags = await tagsCollection.find().sort({ createdAt: -1 }).limit(20).toArray();
       res.send(tags)
     })
+ 
+    // suggestion tags on home page
+    app.get('/suggestionslist-tags', async(req, res) =>{
+      const tags = await tagsCollection.find().sort({ createdAt: -1 }).toArray();
+      res.send(tags)
+    })
 
   // announcements count
     app.get('/unseen-user', async (req, res) => {
