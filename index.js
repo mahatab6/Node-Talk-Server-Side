@@ -47,7 +47,6 @@ const verifyJWT = async (req, res, next) => {
 };
 
 
-
 const uri = process.env.MongoDB_URL;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -74,6 +73,21 @@ async function run() {
     const tagsCollection = database.collection("tagsColl")
     const announcementCollection = database.collection("AnnouncementColl")
 
+    // verifyAdmin 
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.user?.email;
+      if (!email) {
+        return res.status(403).send({ message: "Forbidden: No email found" });
+      }
+
+      const user = await userCollection.findOne({ email: email.toLowerCase() });
+
+      if (!user || user.role !== "admin") {
+        return res.status(403).send({ message: "Forbidden: Admin only" });
+      }
+
+      next();
+    };
 
     // user new post added
     app.post('/add-user-post', async(req, res) => {
@@ -191,22 +205,22 @@ async function run() {
 
     // user-comment-show
    app.get('/specific-post-comment/:id', async (req, res) => {
-    const id = req.params.id;
-    const query = { postId: id };
-    const comments = await commentCollection.find(query).toArray(); 
-    const commentIds = comments.map(comment => comment._id.toString());
+      const id = req.params.id;
+      const query = { postId: id };
+      const comments = await commentCollection.find(query).toArray(); 
+      const commentIds = comments.map(comment => comment._id.toString());
 
-    const reports = await reportCollection.find({commentId: { $in: commentIds }}).toArray();
+      const reports = await reportCollection.find({commentId: { $in: commentIds }}).toArray();
 
-    const reportedSet = new Set(reports.map(r => r.commentId));
+      const reportedSet = new Set(reports.map(r => r.commentId));
 
-    const results = comments.map(comment => ({
-      ...comment,
-      reported: reportedSet.has(comment._id.toString())
+      const results = comments.map(comment => ({
+        ...comment,
+        reported: reportedSet.has(comment._id.toString())
     }));
 
     res.send(results);
-});
+    });
 
 
     // user-Feedback-Report
@@ -263,7 +277,7 @@ async function run() {
     })
 
     // admin comment show
-    app.get('/reported-comments-show',verifyJWT, async (req, res) =>{
+    app.get('/reported-comments-show',verifyJWT,verifyAdmin, async (req, res) =>{
 
       const reports = await reportCollection.find({}).toArray();
       const commentIds = reports.map(r => new ObjectId(r.commentId));
@@ -273,7 +287,7 @@ async function run() {
     })
 
     // report comment delete
-    app.delete('/comment/:id',verifyJWT, async (req, res) =>{
+    app.delete('/comment/:id',verifyJWT,verifyAdmin, async (req, res) =>{
       const id = req.params.id;
       await commentCollection.deleteOne({ _id: new ObjectId(id) });
       const reportResult = await reportCollection.deleteMany({ commentId: id });
@@ -281,7 +295,7 @@ async function run() {
     } )
 
     // report dismiss
-    app.delete('/comment-dismiss/:id', async(req,res) =>{
+    app.delete('/comment-dismiss/:id',verifyJWT, verifyAdmin, async(req,res) =>{
       const id = req.params.id;
       const result = await reportCollection.deleteOne({_id: new ObjectId(id)});
       res.send(result)
@@ -401,7 +415,7 @@ async function run() {
     })
 
     // manage user stats
-    app.get('/manage-user-stats', async (req, res) => {
+    app.get('/manage-user-stats',verifyJWT,verifyAdmin, async (req, res) => {
       const userSearch = req.query.search;
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit);
@@ -429,7 +443,7 @@ async function run() {
     })
 
     // admin profile info for user count
-    app.get('/total-user-info', async(req, res) =>{
+    app.get('/total-user-info',verifyJWT,verifyAdmin, async(req, res) =>{
       const postCount = await postCollection.countDocuments();
       const commentCount = await commentCollection.countDocuments();
       const userCount = await userCollection.countDocuments();
@@ -444,7 +458,7 @@ async function run() {
     })
 
     // admin tags add api
-    app.post('/added-tags', async (req, res) => {
+    app.post('/added-tags',verifyJWT,verifyAdmin, async (req, res) => {
       const newTag = req.body.tags;
 
       const query = { tags: newTag };
@@ -459,14 +473,14 @@ async function run() {
     });
 
     // admin tags delete
-    app.delete('/tags-delete/:id', async(req, res)=>{
+    app.delete('/tags-delete/:id',verifyJWT,verifyAdmin, async(req, res)=>{
       const id = req.params.id;
       const result = await tagsCollection.deleteOne({_id: new ObjectId(id)})
       res.send(result);
     })
 
     // user role change
-    app.patch('/user-stats-change/:id',verifyJWT, async(req, res) =>{
+    app.patch('/user-stats-change/:id',verifyJWT,verifyAdmin, async(req, res) =>{
       const userId = req.params.id;
       const {role} = req.body;
 
@@ -478,7 +492,7 @@ async function run() {
     })
 
     // Create new announcement
-    app.post('/announcement-public', async(req, res) =>{
+    app.post('/announcement-public',verifyJWT,verifyAdmin, async(req, res) =>{
       const announcement = req.body;
       const result = await announcementCollection.insertOne(announcement);
       res.send(result);
@@ -495,7 +509,7 @@ async function run() {
       res.send(result);
     })
 
-    app.delete('/announcement-delete/:id', async(req, res) =>{
+    app.delete('/announcement-delete/:id',verifyJWT, verifyAdmin, async(req, res) =>{
       const id = req.params.id;
       const query = ({_id: new ObjectId(id)});
       const result = await announcementCollection.deleteOne(query)
