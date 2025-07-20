@@ -27,7 +27,6 @@ NodeTalk is the server-side engine of a modern forum platform where people conne
 
 
 #### ✅ Features
-
 .🔐 JWT-based Authentication
 
 .👥 Role-based Authorization
@@ -43,45 +42,5 @@ NodeTalk is the server-side engine of a modern forum platform where people conne
 .🌍 CORS enabled
 
 
-✅ User Features:
-
-🔐 Register/Login via Firebase
-
-🗨️ Post questions, comment, upvote/downvote
-
-📊 View post analytics (views, shares)
-
-🏷️ Filter by tags, search topics
-
-💳 Premium membership via Stripe
-
-✅ Admin Features:
-
-📌 Announcement management
-
-🚨 View reported content
-
-🧹 Tag moderation
-
-🗂️ Admin activity logs (Coming soon)
-
-🔮 Future Roadmap
-
-
-📢 User Notifications
-
-.Upvotes/downvotes
-
-.Mentions and replies
-
-.New announcements
-
-🏷️ Tag-Based Post Pages
-
-Topic-wise discussion boards
-
-📊 Post Analytics
-
-View counts, share counts, growth charts
 
 
