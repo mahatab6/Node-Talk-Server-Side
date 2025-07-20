@@ -90,7 +90,7 @@ async function run() {
     };
 
     // user new post added
-    app.post('/add-user-post', async(req, res) => {
+    app.post('/add-user-post',verifyJWT, async(req, res) => {
       const newPost = req.body;
       const result = await postCollection.insertOne(newPost);
       res.send(result)
@@ -106,7 +106,7 @@ async function run() {
       res.send(result);
     })
     // specific user post count
-    app.get("/specific-post-count/:email", async (req, res) => {
+    app.get("/specific-post-count/:email",verifyJWT, async (req, res) => {
       const email = req.params.email;
       const result = await postCollection.countDocuments({ AuthorEmail: email });
       res.send({ count: result });
@@ -114,7 +114,7 @@ async function run() {
 
 
     // specific post delete on user
-    app.delete('/user-post-remove/:id', async(req, res) =>{
+    app.delete('/user-post-remove/:id',verifyJWT, async(req, res) =>{
       const id = req.params.id;
       const query = {_id: new ObjectId(id)};
       const result = await postCollection.deleteOne(query);
@@ -204,7 +204,7 @@ async function run() {
     })
 
     // user-comment-show
-   app.get('/specific-post-comment/:id', async (req, res) => {
+   app.get('/specific-post-comment/:id',verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { postId: id };
       const comments = await commentCollection.find(query).toArray(); 
@@ -224,7 +224,7 @@ async function run() {
 
 
     // user-Feedback-Report
-    app.post('/user-feedback-report', async(req, res) =>{
+    app.post('/user-feedback-report',verifyJWT, async(req, res) =>{
       const reportInfo = req.body;
       const result = await reportCollection.insertOne(reportInfo);
       res.send(result)
@@ -302,7 +302,7 @@ async function run() {
     })
  
     // user-post-summary
-    app.get('/user-summary/:email', async (req, res)=>{
+    app.get('/user-summary/:email',verifyJWT, async (req, res)=>{
       const email = req.params.email;
       const posts = await postCollection.aggregate([
         {$match: {AuthorEmail: email}},
@@ -334,7 +334,7 @@ async function run() {
     })
 
     // user-post-count
-    app.get('/user-post-count/:email', async(req, res) =>{
+    app.get('/user-post-count/:email',verifyJWT, async(req, res) =>{
       const email = req.params.email;
       const result = await postCollection.countDocuments({ AuthorEmail: email})
       res.send({result})
