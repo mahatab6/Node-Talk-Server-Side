@@ -61,7 +61,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+   
 
     const database = client.db("NodeTalkDataBase");
     const postCollection = database.collection("postColl")
@@ -189,6 +189,13 @@ async function run() {
       res.send({post: result, total});
     })
 
+    // Trends topic now
+    app.get('/trends-topic', async(req, res) => {
+      const trendingTopic = await postCollection.find().sort({upVote: -1}).limit(6).toArray();
+      res.send(trendingTopic);
+    })
+
+
     // userComment stor and count
     app.post('/comments', async(req, res) => {
       const comment = req.body;
@@ -204,7 +211,7 @@ async function run() {
     })
 
     // user-comment-show
-   app.get('/specific-post-comment/:id',verifyJWT, async (req, res) => {
+   app.get('/specific-post-comment/:id', async (req, res) => {
       const id = req.params.id;
       const query = { postId: id };
       const comments = await commentCollection.find(query).toArray(); 
@@ -411,7 +418,6 @@ async function run() {
         { $set: { role: "paidmember" } });
       
       res.send({message: "Payment recorded and user upgraded."})
-      console.log(paymentDoc)
     })
 
     // manage user stats
@@ -524,7 +530,7 @@ async function run() {
  
     // suggestion tags on home page
     app.get('/suggestionslist-tags', async(req, res) =>{
-      const tags = await tagsCollection.find().sort({ createdAt: -1 }).toArray();
+      const tags = await tagsCollection.find().sort({ createdAt: -1 }).limit(20).toArray();
       res.send(tags)
     })
 
@@ -538,8 +544,8 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
